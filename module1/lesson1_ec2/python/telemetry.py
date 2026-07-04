@@ -295,3 +295,44 @@ if __name__ == "__main__":
         collect_telemetry(),
         indent=4
     ))
+
+# ---------------------------------------------------------
+# Chewbacca says:
+#
+# "Rrrrr..."
+#
+# Translation:
+#
+# Recent logs usually explain
+# what just happened.
+# ---------------------------------------------------------
+
+def get_recent_journal(lines=100):
+
+    command = (
+        f"journalctl -n {lines} --no-pager"
+    )
+
+    return run_command(command)
+
+
+# ---------------------------------------------------------
+
+def get_recent_auth(lines=50):
+
+    command = (
+        f"journalctl -u sshd -n {lines} --no-pager"
+    )
+
+    return run_command(command)
+
+
+# ---------------------------------------------------------
+
+def get_recent_kernel(lines=30):
+
+    command = (
+        f"dmesg | tail -{lines}"
+    )
+
+    return run_command(command)
