@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Prevent Git Bash (MSYS) from rewriting /ecs/... CloudWatch paths into Windows paths.
+export MSYS_NO_PATHCONV=1
 : "${AWS_REGION:=us-east-1}"
 export AWS_REGION
 command -v aws >/dev/null || { echo 'AWS CLI missing' >&2; exit 1; }

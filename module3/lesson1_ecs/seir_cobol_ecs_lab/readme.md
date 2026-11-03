@@ -79,6 +79,15 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
+
+**Windows / Git Bash:** CloudWatch log group names starting with `/ecs/` can be
+rewritten as Windows paths. `deploy.sh` exports `MSYS_NO_PATHCONV=1`. For manual
+tails:
+
+```bash
+MSYS_NO_PATHCONV=1 aws logs tail /ecs/seir-cobol-batch --since 20m --region us-east-1
+```
+
 The script will print the ECS task ARN, its exit code, the stopped reason, and recent CloudWatch logs. A successful run has an ECS container exit code of `0` and prints `FINANCIAL INVARIANT PASSED`.
 
 **Important:** The script assumes a standard default VPC with working outbound routing. If the selected subnet lacks internet access, the task may fail to pull its image or send logs. In a production-style private subnet, use NAT and/or correctly configured VPC endpoints for ECR, S3, and CloudWatch Logs. If IAM role creation is restricted, the instructor should pre-create the role and attach `AmazonECSTaskExecutionRolePolicy`.
