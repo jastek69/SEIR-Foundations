@@ -1,10 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Cleanup for Module 3 Lab 01 (deploy.sh leftovers after terraform destroy, or script-only labs).
-# Does NOT delete the IAM execution role or the default VPC (matches lab readme).
+# Cleanup for Module 3 Lab 01 when it was deployed with deploy.sh (script path).
+# If you deployed with Terraform, do NOT use this script: use the targeted
+# `terraform destroy` in SEIR-Foundations-2 docs/RUNBOOK-design.md step 5.
+# This script refuses to run while the Terraform state still holds resources.
+# NEVER deletes the ECR repository or its images. Does NOT delete the IAM
+# execution role or the default VPC (matches lab readme).
 # Idempotent: missing resources are skipped.
 export MSYS_NO_PATHCONV=1
 export AWS_REGION="${AWS_REGION:-us-east-1}"
+
+TF_DIR="$(cd "$(dirname "$0")" && pwd)/terraform"
+if [[ -d "$TF_DIR/.terraform" ]]; then
+  # Fail closed: if the state cannot be read (no terraform, wrong AWS_PROFILE), stop too.
+  if ! command -v terraform >/dev/null || ! TF_STATE=$(terraform -chdir="$TF_DIR" state list 2>/dev/null); then
+    echo "Cannot read the Terraform state in $TF_DIR (set AWS_PROFILE=sebekai?). Stopping." >&2
+    exit 1
+  fi
+  if [[ -n "$TF_STATE" ]]; then
+    echo "Terraform manages this lab (state is not empty). Stopping." >&2
+    echo "Use the targeted terraform destroy (keeps ECR) from docs/RUNBOOK-design.md step 5." >&2
+    exit 1
+  fi
+fi
 
 CLUSTER=seir-module3
 REPO=seir-cobol-finance
@@ -38,10 +56,9 @@ else
   skip "ECS cluster $CLUSTER not found"
 fi
 
-# --- ECR repository ---
+# --- ECR repository: NEVER deleted (project rule, SEIR-Foundations-2 CLAUDE.md "ECR: never delete") ---
 if aws ecr describe-repositories --repository-names "$REPO" --region "$AWS_REGION" >/dev/null 2>&1; then
-  aws ecr delete-repository --repository-name "$REPO" --force --region "$AWS_REGION" >/dev/null
-  ok "Deleted ECR repository $REPO"
+  ok "Kept ECR repository $REPO and its images (never deleted)"
 else
   skip "ECR repository $REPO not found"
 fi
